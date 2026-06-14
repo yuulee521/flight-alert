@@ -1,0 +1,10 @@
+[project]
+name = "flight-alert"
+version = "0.1.0"
+description = "Notify ntfy when low widebody aircraft pass over Weesp."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false
