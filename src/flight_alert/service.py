@@ -39,6 +39,7 @@ class FlightAlertService:
 
     def check_once(self) -> None:
         aircraft = self.fetch_aircraft()
+        self.log_aircraft(aircraft)
         candidates = [
             item
             for item in aircraft
@@ -75,5 +76,30 @@ class FlightAlertService:
             return True
         return time.time() - last_alert >= self.config.alert_cooldown_seconds
 
+    def log_aircraft(self, aircraft: list[Aircraft]) -> None:
+        if not aircraft:
+            print("no aircraft found nearby", flush=True)
+            return
+
+        print(f"found {len(aircraft)} aircraft nearby", flush=True)
+        for item in sorted(aircraft, key=lambda a: a.distance_km):
+            print(
+                "plane "
+                f"{item.display_callsign} "
+                f"hex={item.hex} "
+                f"type={item.aircraft_type or 'unknown'} "
+                f"alt={self._format_altitude(item)} "
+                f"distance={item.distance_km:.1f}km "
+                f"registration={item.registration or 'unknown'} "
+                f"seen={item.seen_seconds if item.seen_seconds is not None else 'unknown'}s",
+                flush=True,
+            )
+
     def _stop(self, *_args: object) -> None:
         self._running = False
+
+    @staticmethod
+    def _format_altitude(aircraft: Aircraft) -> str:
+        if aircraft.altitude_m is None:
+            return "unknown"
+        return f"{aircraft.altitude_m:.0f}m"
