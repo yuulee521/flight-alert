@@ -9,6 +9,7 @@ from urllib import request
 from flight_alert.aircraft import Aircraft, is_alert_candidate, parse_airplanes_live
 from flight_alert.config import Config
 from flight_alert.notify import publish_ntfy
+from flight_alert.route import RouteResolver
 
 
 class FlightAlertService:
@@ -18,6 +19,7 @@ class FlightAlertService:
         self.dry_run = dry_run
         self._running = True
         self._last_alert_by_hex: dict[str, float] = {}
+        self._routes = RouteResolver(config)
 
     def run(self) -> None:
         signal.signal(signal.SIGTERM, self._stop)
@@ -56,7 +58,10 @@ class FlightAlertService:
                     f"alerting {item.display_callsign} {item.aircraft_type} "
                     f"{item.altitude_m:.0f}m {item.distance_km:.1f}km"
                 )
-                publish_ntfy(self.config, item, dry_run=self.dry_run)
+                route = self._routes.resolve(item.callsign)
+                if route:
+                    print(f"route for {item.display_callsign}: 起飞城市={route.departure_display}", flush=True)
+                publish_ntfy(self.config, item, route=route, dry_run=self.dry_run)
                 self._last_alert_by_hex[item.hex] = time.time()
 
     def fetch_aircraft(self) -> list[Aircraft]:

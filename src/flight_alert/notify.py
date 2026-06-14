@@ -4,11 +4,13 @@ from urllib import request
 
 from flight_alert.aircraft import Aircraft
 from flight_alert.config import Config
+from flight_alert.route import RouteInfo
 
 
-def build_message(aircraft: Aircraft) -> str:
+def build_message(aircraft: Aircraft, route: RouteInfo | None = None) -> str:
     lines = [
         f"{aircraft.display_callsign} - {aircraft.aircraft_type or 'unknown type'}",
+        f"FromCity: {route.departure_display if route else 'unknown'}",
         f"Altitude: {_fmt_m(aircraft.altitude_m)}",
         f"Distance: {aircraft.distance_km:.1f} km from home",
     ]
@@ -23,8 +25,14 @@ def build_message(aircraft: Aircraft) -> str:
     return "\n".join(lines)
 
 
-def publish_ntfy(config: Config, aircraft: Aircraft, *, dry_run: bool = False) -> None:
-    body = build_message(aircraft).encode("utf-8")
+def publish_ntfy(
+    config: Config,
+    aircraft: Aircraft,
+    *,
+    route: RouteInfo | None = None,
+    dry_run: bool = False,
+) -> None:
+    body = build_message(aircraft, route).encode("utf-8")
     req = request.Request(
         config.ntfy_endpoint,
         data=body,

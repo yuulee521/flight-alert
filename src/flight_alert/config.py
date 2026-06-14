@@ -62,6 +62,9 @@ class Config:
     ntfy_priority: str = "high"
     ntfy_tags: str = "airplane"
     aircraft_api_url: str = "https://api.airplanes.live/v2/point/{lat}/{lon}/{radius_nm}"
+    route_lookup_enabled: bool = True
+    route_api_url: str = "https://api.adsbdb.com/v0/callsign/{callsign}"
+    route_cache_seconds: int = 1800
     widebody_types: frozenset[str] = frozenset(DEFAULT_WIDEBODY_TYPES)
 
     @property
@@ -103,6 +106,9 @@ def load_config() -> Config:
         ntfy_priority=os.getenv("NTFY_PRIORITY", Config.ntfy_priority),
         ntfy_tags=os.getenv("NTFY_TAGS", Config.ntfy_tags),
         aircraft_api_url=os.getenv("AIRCRAFT_API_URL", Config.aircraft_api_url),
+        route_lookup_enabled=_bool_env("ROUTE_LOOKUP_ENABLED", Config.route_lookup_enabled),
+        route_api_url=os.getenv("ROUTE_API_URL", Config.route_api_url),
+        route_cache_seconds=_int_env("ROUTE_CACHE_SECONDS", Config.route_cache_seconds),
         widebody_types=_types_env("WIDEBODY_TYPES", DEFAULT_WIDEBODY_TYPES),
     )
 
@@ -115,6 +121,13 @@ def _float_env(name: str, default: float) -> float:
 def _int_env(name: str, default: int) -> int:
     value = os.getenv(name)
     return default if value is None else int(value)
+
+
+def _bool_env(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _types_env(name: str, default: set[str]) -> frozenset[str]:

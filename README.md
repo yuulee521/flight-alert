@@ -10,11 +10,12 @@ Notifications include:
 
 - Flight callsign when available
 - Aircraft ICAO type, for example `B789` or `A388`
+- FromCity when route lookup can resolve the callsign
 - Registration when available
 - Altitude and distance from home
 - A link to inspect the aircraft live on Airplanes.live
 
-Route origin/destination is not reliably present in raw ADS-B data. The notification includes a live tracking link so you can inspect route details when the tracking site has them.
+Route origin/destination is not present in raw ADS-B position data. The service does a best-effort callsign lookup through `ROUTE_API_URL` and falls back to `FromCity: unknown` when route data is unavailable.
 
 ## iPhone Setup
 
@@ -91,6 +92,8 @@ POLL_SECONDS=10
 ALERT_COOLDOWN_SECONDS=1800
 NTFY_URL=https://ntfy.sh
 NTFY_TOPIC=over-weesp-flights-alerts
+ROUTE_LOOKUP_ENABLED=true
+ROUTE_API_URL=https://api.adsbdb.com/v0/callsign/{callsign}
 ```
 
 The default widebody allowlist includes common Airbus and Boeing widebodies such as A330, A350, A380, B767, B777, B787, and B747.
