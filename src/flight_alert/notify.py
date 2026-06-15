@@ -46,11 +46,17 @@ def publish_ntfy(
         },
     )
     if dry_run:
-        print(f"[dry-run] would publish to {config.ntfy_endpoint}")
-        print(body.decode("utf-8"))
+        print(f"[dry-run] would publish to {config.ntfy_endpoint}", flush=True)
+        print(body.decode("utf-8"), flush=True)
         return
     with request.urlopen(req, timeout=10) as response:
         response.read()
+        status = getattr(response, "status", response.getcode())
+    print(
+        f"ntfy published {aircraft.display_callsign} to {config.ntfy_endpoint} "
+        f"status={status}",
+        flush=True,
+    )
 
 
 def _fmt_m(value: float | None) -> str:
