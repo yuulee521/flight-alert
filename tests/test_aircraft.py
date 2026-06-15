@@ -65,7 +65,7 @@ class AircraftTest(unittest.TestCase):
         )[0]
         message = build_message(aircraft, RouteInfo(departure_city="Amsterdam", departure_airport="AMS"))
 
-        self.assertIn("FromCity: Amsterdam (AMS)", message)
+        self.assertIn("起飞城市: Amsterdam (AMS)", message)
 
     def test_publish_ntfy_logs_success_status(self) -> None:
         aircraft = parse_airplanes_live(

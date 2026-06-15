@@ -56,8 +56,7 @@ class FlightAlertService:
             if self.should_alert(item):
                 log(
                     f"alerting {item.display_callsign} {item.aircraft_type} "
-                    f"{item.altitude_m:.0f}m {item.distance_km:.1f}km",
-                    flush=True,
+                    f"{item.altitude_m:.0f}m {item.distance_km:.1f}km"
                 )
                 route = self._routes.resolve(item.callsign)
                 if route:
@@ -70,7 +69,7 @@ class FlightAlertService:
             return self._fetch_from_url(self.config.aircraft_api_url)
         except error.HTTPError as exc:
             if exc.code == 429:
-                print("primary aircraft API returned 429, trying fallback", flush=True)
+                log("primary aircraft API returned 429, trying fallback")
                 return self._fetch_from_url(self.config.fallback_aircraft_api_url)
             raise
 
