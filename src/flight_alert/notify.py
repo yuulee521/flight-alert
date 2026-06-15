@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from urllib import request
+from urllib import error, request
 
 from flight_alert.aircraft import Aircraft
 from flight_alert.config import Config
@@ -50,14 +50,27 @@ def publish_ntfy(
         log(f"[dry-run] would publish to {config.ntfy_endpoint}")
         log(body.decode("utf-8").replace("\n", " | "))
         return
-    with request.urlopen(req, timeout=10) as response:
-        response.read()
-        status = getattr(response, "status", response.getcode())
-    print(
-        f"ntfy published {aircraft.display_callsign} to {config.ntfy_endpoint} "
-        f"status={status}",
-        flush=True,
-    )
+
+    try:
+        with request.urlopen(req, timeout=10) as response:
+            response.read()
+            status = getattr(response, "status", response.getcode())
+        log(
+            f"ntfy published {aircraft.display_callsign} to {config.ntfy_endpoint} "
+            f"status={status}"
+        )
+    except error.HTTPError as exc:
+        status = exc.code
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:  # noqa: BLE001
+            error_body = str(exc)
+        log(
+            f"ntfy publish failed for {aircraft.display_callsign} to {config.ntfy_endpoint} "
+            f"status={status} error={error_body}",
+            error=True,
+        )
+        raise
 
 
 def _fmt_m(value: float | None) -> str:
