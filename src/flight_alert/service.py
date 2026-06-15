@@ -8,6 +8,7 @@ from urllib import error, request
 
 from flight_alert.aircraft import Aircraft, is_alert_candidate, parse_airplanes_live
 from flight_alert.config import Config
+from flight_alert.logging import log
 from flight_alert.notify import publish_ntfy
 from flight_alert.route import RouteResolver
 
@@ -24,17 +25,16 @@ class FlightAlertService:
     def run(self) -> None:
         signal.signal(signal.SIGTERM, self._stop)
         signal.signal(signal.SIGINT, self._stop)
-        print(
+        log(
             "Watching for widebodies near "
             f"{self.config.home_lat},{self.config.home_lon} "
-            f"within {self.config.radius_km} km below {self.config.max_altitude_m:.0f} m",
-            flush=True,
+            f"within {self.config.radius_km} km below {self.config.max_altitude_m:.0f} m"
         )
         while self._running:
             try:
                 self.check_once()
             except Exception as exc:  # noqa: BLE001 - keep the daemon alive after transient API failures.
-                print(f"check failed: {exc}", file=sys.stderr)
+                log(f"check failed: {exc}", error=True)
             if self.once:
                 return
             time.sleep(self.config.poll_seconds)
@@ -54,14 +54,14 @@ class FlightAlertService:
         ]
         for item in sorted(candidates, key=lambda a: a.distance_km):
             if self.should_alert(item):
-                print(
+                log(
                     f"alerting {item.display_callsign} {item.aircraft_type} "
                     f"{item.altitude_m:.0f}m {item.distance_km:.1f}km",
                     flush=True,
                 )
                 route = self._routes.resolve(item.callsign)
                 if route:
-                    print(f"route for {item.display_callsign}: 起飞城市={route.departure_display}", flush=True)
+                    log(f"route for {item.display_callsign}: 起飞城市={route.departure_display}")
                 publish_ntfy(self.config, item, route=route, dry_run=self.dry_run)
                 self._last_alert_by_hex[item.hex] = time.time()
 
@@ -93,12 +93,12 @@ class FlightAlertService:
 
     def log_aircraft(self, aircraft: list[Aircraft]) -> None:
         if not aircraft:
-            print("no aircraft found nearby", flush=True)
+            log("no aircraft found nearby")
             return
 
-        print(f"found {len(aircraft)} aircraft nearby", flush=True)
+        log(f"found {len(aircraft)} aircraft nearby")
         for item in sorted(aircraft, key=lambda a: a.distance_km):
-            print(
+            log(
                 "plane "
                 f"{item.display_callsign} "
                 f"hex={item.hex} "
@@ -106,8 +106,7 @@ class FlightAlertService:
                 f"alt={self._format_altitude(item)} "
                 f"distance={item.distance_km:.1f}km "
                 f"registration={item.registration or 'unknown'} "
-                f"seen={item.seen_seconds if item.seen_seconds is not None else 'unknown'}s",
-                flush=True,
+                f"seen={item.seen_seconds if item.seen_seconds is not None else 'unknown'}s"
             )
 
     def _stop(self, *_args: object) -> None:

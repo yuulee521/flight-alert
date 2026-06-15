@@ -7,6 +7,7 @@ from typing import Any
 from urllib import parse, request
 
 from flight_alert.config import Config
+from flight_alert.logging import log
 
 
 @dataclass(frozen=True)
@@ -56,12 +57,12 @@ class RouteResolver:
             with request.urlopen(req, timeout=10) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except Exception as exc:  # noqa: BLE001 - route data is optional enrichment.
-            print(f"route lookup failed for {callsign}: {exc}", flush=True)
+            log(f"route lookup failed for {callsign}: {exc}", error=True)
             return None
 
         route = parse_route_payload(payload)
         if route is None:
-            print(f"route lookup found no departure city for {callsign}", flush=True)
+            log(f"route lookup found no departure city for {callsign}")
         return route
 
 

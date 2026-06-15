@@ -4,13 +4,14 @@ from urllib import request
 
 from flight_alert.aircraft import Aircraft
 from flight_alert.config import Config
+from flight_alert.logging import log
 from flight_alert.route import RouteInfo
 
 
 def build_message(aircraft: Aircraft, route: RouteInfo | None = None) -> str:
     lines = [
         f"{aircraft.display_callsign} - {aircraft.aircraft_type or 'unknown type'}",
-        f"FromCity: {route.departure_display if route else 'unknown'}",
+        f"起飞城市: {route.departure_display if route else 'unknown'}",
         f"Altitude: {_fmt_m(aircraft.altitude_m)}",
         f"Distance: {aircraft.distance_km:.1f} km from home",
     ]
@@ -46,8 +47,8 @@ def publish_ntfy(
         },
     )
     if dry_run:
-        print(f"[dry-run] would publish to {config.ntfy_endpoint}", flush=True)
-        print(body.decode("utf-8"), flush=True)
+        log(f"[dry-run] would publish to {config.ntfy_endpoint}")
+        log(body.decode("utf-8").replace("\n", " | "))
         return
     with request.urlopen(req, timeout=10) as response:
         response.read()
