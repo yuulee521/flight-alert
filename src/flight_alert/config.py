@@ -62,6 +62,7 @@ class Config:
     ntfy_priority: str = "high"
     ntfy_tags: str = "airplane"
     aircraft_api_url: str = "https://api.airplanes.live/v2/point/{lat}/{lon}/{radius_nm}"
+    fallback_aircraft_api_url: str = "https://api.adsb.fi/v2/point/{lat}/{lon}/{radius_nm}"
     route_lookup_enabled: bool = True
     route_api_url: str = "https://api.adsbdb.com/v0/callsign/{callsign}"
     route_cache_seconds: int = 1800
@@ -106,6 +107,7 @@ def load_config() -> Config:
         ntfy_priority=os.getenv("NTFY_PRIORITY", Config.ntfy_priority),
         ntfy_tags=os.getenv("NTFY_TAGS", Config.ntfy_tags),
         aircraft_api_url=os.getenv("AIRCRAFT_API_URL", Config.aircraft_api_url),
+        fallback_aircraft_api_url=os.getenv("FALLBACK_AIRCRAFT_API_URL", Config.fallback_aircraft_api_url),
         route_lookup_enabled=_bool_env("ROUTE_LOOKUP_ENABLED", Config.route_lookup_enabled),
         route_api_url=os.getenv("ROUTE_API_URL", Config.route_api_url),
         route_cache_seconds=_int_env("ROUTE_CACHE_SECONDS", Config.route_cache_seconds),

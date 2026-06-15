@@ -4,7 +4,7 @@ import json
 import signal
 import sys
 import time
-from urllib import request
+from urllib import error, request
 
 from flight_alert.aircraft import Aircraft, is_alert_candidate, parse_airplanes_live
 from flight_alert.config import Config
@@ -66,7 +66,16 @@ class FlightAlertService:
                 self._last_alert_by_hex[item.hex] = time.time()
 
     def fetch_aircraft(self) -> list[Aircraft]:
-        url = self.config.aircraft_api_url.format(
+        try:
+            return self._fetch_from_url(self.config.aircraft_api_url)
+        except error.HTTPError as exc:
+            if exc.code == 429:
+                print("primary aircraft API returned 429, trying fallback", flush=True)
+                return self._fetch_from_url(self.config.fallback_aircraft_api_url)
+            raise
+
+    def _fetch_from_url(self, url_template: str) -> list[Aircraft]:
+        url = url_template.format(
             lat=self.config.home_lat,
             lon=self.config.home_lon,
             radius_nm=round(self.config.radius_nm, 2),
