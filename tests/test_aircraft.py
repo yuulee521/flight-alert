@@ -1,8 +1,11 @@
+import io
 import unittest
+from contextlib import redirect_stdout
+from unittest.mock import patch
 
 from flight_alert.aircraft import altitude_to_meters, is_alert_candidate, parse_airplanes_live
-from flight_alert.config import DEFAULT_WIDEBODY_TYPES
-from flight_alert.notify import build_message
+from flight_alert.config import Config, DEFAULT_WIDEBODY_TYPES
+from flight_alert.notify import build_message, publish_ntfy
 from flight_alert.route import RouteInfo, parse_route_payload
 
 
@@ -62,7 +65,47 @@ class AircraftTest(unittest.TestCase):
         )[0]
         message = build_message(aircraft, RouteInfo(departure_city="Amsterdam", departure_airport="AMS"))
 
-        self.assertIn("起飞城市: Amsterdam (AMS)", message)
+        self.assertIn("FromCity: Amsterdam (AMS)", message)
+
+    def test_publish_ntfy_logs_success_status(self) -> None:
+        aircraft = parse_airplanes_live(
+            {
+                "ac": [
+                    {
+                        "hex": "48418c",
+                        "flight": "KLM895",
+                        "t": "B789",
+                        "alt_geom": 2500,
+                        "lat": 52.31,
+                        "lon": 5.04,
+                    }
+                ]
+            },
+            52.3076,
+            5.0413,
+        )[0]
+
+        class Response:
+            status = 200
+
+            def __enter__(self) -> "Response":
+                return self
+
+            def __exit__(self, *_args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return b"ok"
+
+            def getcode(self) -> int:
+                return self.status
+
+        output = io.StringIO()
+        with patch("flight_alert.notify.request.urlopen", return_value=Response()):
+            with redirect_stdout(output):
+                publish_ntfy(Config(ntfy_url="https://ntfy.example", ntfy_topic="test-topic"), aircraft)
+
+        self.assertIn("ntfy published KLM895 to https://ntfy.example/test-topic status=200", output.getvalue())
 
     def test_parse_adsbdb_style_route_payload(self) -> None:
         route = parse_route_payload(

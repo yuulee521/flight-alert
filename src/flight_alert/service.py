@@ -56,7 +56,8 @@ class FlightAlertService:
             if self.should_alert(item):
                 print(
                     f"alerting {item.display_callsign} {item.aircraft_type} "
-                    f"{item.altitude_m:.0f}m {item.distance_km:.1f}km"
+                    f"{item.altitude_m:.0f}m {item.distance_km:.1f}km",
+                    flush=True,
                 )
                 route = self._routes.resolve(item.callsign)
                 if route:
