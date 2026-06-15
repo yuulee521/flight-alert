@@ -61,7 +61,10 @@ class FlightAlertService:
                 route = self._routes.resolve(item.callsign)
                 if route:
                     log(f"route for {item.display_callsign}: 起飞城市={route.departure_display}")
-                publish_ntfy(self.config, item, route=route, dry_run=self.dry_run)
+                try:
+                    publish_ntfy(self.config, item, route=route, dry_run=self.dry_run)
+                except Exception as exc:  # noqa: BLE001
+                    log(f"failed to publish notification for {item.display_callsign}: {exc}", error=True)
                 self._last_alert_by_hex[item.hex] = time.time()
 
     def fetch_aircraft(self) -> list[Aircraft]:
