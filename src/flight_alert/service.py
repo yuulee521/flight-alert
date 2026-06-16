@@ -30,6 +30,7 @@ class FlightAlertService:
             f"{self.config.home_lat},{self.config.home_lon} "
             f"within {self.config.radius_km} km below {self.config.max_altitude_m:.0f} m"
         )
+        log(f"Using ntfy endpoint: {self.config.ntfy_endpoint}")
         while self._running:
             try:
                 self.check_once()
@@ -61,8 +62,11 @@ class FlightAlertService:
                 route = self._routes.resolve(item.callsign)
                 if route:
                     log(f"route for {item.display_callsign}: 起飞城市={route.departure_display}")
-                publish_ntfy(self.config, item, route=route, dry_run=self.dry_run)
-                self._last_alert_by_hex[item.hex] = time.time()
+                try:
+                    publish_ntfy(self.config, item, route=route, dry_run=self.dry_run)
+                    self._last_alert_by_hex[item.hex] = time.time()
+                except Exception as exc:  # noqa: BLE001
+                    log(f"notification failed for {item.display_callsign}: {exc}", error=True)
 
     def fetch_aircraft(self) -> list[Aircraft]:
         try:
@@ -70,7 +74,13 @@ class FlightAlertService:
         except error.HTTPError as exc:
             if exc.code == 429:
                 log("primary aircraft API returned 429, trying fallback")
-                return self._fetch_from_url(self.config.fallback_aircraft_api_url)
+                try:
+                    return self._fetch_from_url(self.config.fallback_aircraft_api_url)
+                except error.HTTPError as fallback_exc:
+                    if fallback_exc.code == 429:
+                        log("both primary and fallback APIs are rate-limited", error=True)
+                        return []
+                    raise
             raise
 
     def _fetch_from_url(self, url_template: str) -> list[Aircraft]:
