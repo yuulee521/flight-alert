@@ -56,8 +56,7 @@ class RouteResolver:
         try:
             with request.urlopen(req, timeout=10) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-        except Exception as exc:  # noqa: BLE001 - route data is optional enrichment.
-            log(f"route lookup failed for {callsign}: {exc}", error=True)
+        except Exception:  # noqa: BLE001 - route data is optional enrichment.
             return None
 
         route = parse_route_payload(payload)

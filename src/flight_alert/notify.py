@@ -44,6 +44,7 @@ def publish_ntfy(
             "Tags": config.ntfy_tags,
             "Click": aircraft.tracking_url,
             "Content-Type": "text/plain; charset=utf-8",
+            "User-Agent": "flight-alert/0.1",
         },
     )
     if dry_run:
