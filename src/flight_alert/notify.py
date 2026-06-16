@@ -11,7 +11,7 @@ from flight_alert.route import RouteInfo
 def build_message(aircraft: Aircraft, route: RouteInfo | None = None) -> str:
     lines = [
         f"{aircraft.display_callsign} - {aircraft.aircraft_type or 'unknown type'}",
-        f"起飞城市: {route.departure_display if route else 'unknown'}",
+        f"FromCity: {route.departure_display if route else 'unknown'}",
         f"Altitude: {_fmt_m(aircraft.altitude_m)}",
         f"Distance: {aircraft.distance_km:.1f} km from home",
     ]

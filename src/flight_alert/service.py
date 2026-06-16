@@ -60,7 +60,7 @@ class FlightAlertService:
                 )
                 route = self._routes.resolve(item.callsign)
                 if route:
-                    log(f"route for {item.display_callsign}: 起飞城市={route.departure_display}")
+                    log(f"route for {item.display_callsign}: FromCity={route.departure_display}")
                 publish_ntfy(self.config, item, route=route, dry_run=self.dry_run)
                 self._last_alert_by_hex[item.hex] = time.time()
 
